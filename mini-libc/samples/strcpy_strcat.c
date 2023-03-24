@@ -17,6 +17,7 @@ int main(void)
 
 	strcpy(dst, src);
 	write(1, dst, strlen(dst));
+	// write(1, "hello\n", 6);
 
 	/* strncpy - str2 is set to str1 (To be or not to be) */
 	strncpy(str2, str1, sizeof(str2));

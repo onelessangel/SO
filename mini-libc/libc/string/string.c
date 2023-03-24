@@ -4,7 +4,18 @@
 
 char *strcpy(char *destination, const char *source)
 {
-	/* TODO: Implement strcpy(). */
+	if (destination == NULL || source == NULL) {
+		return NULL;
+	}
+
+	size_t i = 0;
+
+	while (source[i] != '\0') {
+		destination[i] = source[i];
+		i++;
+	}
+
+	destination[i] = '\0';
 
 	return destination;
 }
