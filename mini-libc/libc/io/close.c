@@ -7,6 +7,12 @@
 
 int close(int fd)
 {
-	/* TODO: Implement close(). */
-	return -1;
+	// 0 if success, -error otherwise
+	int outcome = syscall(__NR_close, fd);
+
+	if (outcome < 0) {
+		errno = -outcome;
+		return -1;
+	}
+	return 0;
 }

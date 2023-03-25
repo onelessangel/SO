@@ -9,6 +9,8 @@
 		"types.h": "c",
 		"io.h": "c",
 		"stat.h": "c",
-		"syscall_list.h": "c"
+		"syscall_list.h": "c",
+		"fcntl.h": "c",
+		"stdarg.h": "c"
 	}
 }

@@ -7,6 +7,13 @@
 
 int nanosleep(const struct timespec *req, struct timespec *rem)
 {
-	errno = syscall(__NR_nanosleep, req, rem);
-	return errno == 0 ? 0 : -1;
+	// 0 if success, -error otherwise
+	int outcome = syscall(__NR_nanosleep, req, rem);
+
+	if (outcome < 0) {
+		errno = -outcome;
+		return -1;
+	}
+
+	return 0;
 }
