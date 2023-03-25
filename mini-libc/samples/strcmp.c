@@ -22,6 +22,8 @@ int main(void)
 	/* string1 is lower than string2 */
 	ret = strcmp(str1, str2);
 	isEqual(ret);
+	// write(1, "hello\n", 6);
+	// write(1, "hello\n", 6);
 
 	/* string1 is lower than string2 */
 	ret = strncmp(str1, str2, strlen(str2));

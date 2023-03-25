@@ -49,11 +49,8 @@ char *strcat(char *destination, const char *source)
 		return NULL;
 	}
 
-	size_t i = 0, j = 0;
-
-	while (destination[i] != '\0') {
-		i++;
-	}
+	size_t i = strlen(destination);
+	size_t j = 0;
 
 	while (source[j] != '\0') {
 		destination[i++] = source[j++];
@@ -85,28 +82,23 @@ char *strncat(char *destination, const char *source, size_t len)
 int strcmp(const char *str1, const char *str2)
 {
 	size_t i = 0;
-	int res;
 
-	while (str1[i] != '\0' || str2[i] != '\0') {
-		res = (int)str1[i] - (int)str2[i];
-
-		if (res != 0) {
-			break;
-		}
-		// if (*ptr1 == *ptr2) {
-		// 	ptr1++;
-		// 	ptr2++;
-		// 	continue;
-		// }
+	while (str1[i] != '\0' && str1[i] == str2[i]) {
+		i++;
 	}
 
-	return res;
+	return (unsigned char)str1[i] - (unsigned char)str2[i];
 }
 
 int strncmp(const char *str1, const char *str2, size_t len)
 {
-	/* TODO: Implement strncmp(). */
-	return -1;
+	size_t i = 0;
+
+	while (str1[i] != '\0' && str1[i] == str2[i] && i < len - 1) {
+		i++;
+	}
+
+	return (unsigned char)str1[i] - (unsigned char)str2[i];
 }
 
 size_t strlen(const char *str)
@@ -121,27 +113,84 @@ size_t strlen(const char *str)
 
 char *strchr(const char *str, int c)
 {
-	/* TODO: Implement strchr(). */
+	while (*str != '\0' && *str != c) {
+		str++;
+	}
+
+	// check c == '\0'
+	if (*str == c) {
+		return str;
+	}
 
 	return NULL;
 }
 
 char *strrchr(const char *str, int c)
 {
-	/* TODO: Implement strrchr(). */
+	const char *last = NULL;
 
-	return NULL;
+	while (*str != '\0') {
+		if (*str == c) {
+			last = str;
+		}
+
+		str++;
+	}
+
+	// check c == '\0'
+	if (*str == c) {
+		last = str;
+	}
+
+	return last;
 }
 
 char *strstr(const char *haystack, const char *needle)
 {
-	/* TODO: Implement strstr(). */
+	if (strlen(needle) == 0) {
+		return haystack;
+	}
+
+	size_t i;
+
+	while (*haystack != '\0') {
+		i = 0;
+
+		while (needle[i] != '\0' && haystack[i] == needle[i]) {
+			i++;
+		}
+
+		if (needle[i] == '\0') {
+			return haystack;
+		}
+
+		haystack++;
+	}
+	
 	return NULL;
 }
 
 char *strrstr(const char *haystack, const char *needle)
 {
-	/* TODO: Implement strrstr(). */
+	size_t needle_len = strlen(needle);
+
+	if (needle_len == 0) {
+		return haystack;
+	}
+
+	char *prev_ptr = NULL, *ptr = NULL;
+
+	while (*haystack != '\0') {
+		ptr = strstr(haystack, needle);
+
+		if (ptr == NULL) {
+			return prev_ptr;
+		}
+
+		prev_ptr = ptr;
+		haystack += needle_len;
+	}
+
 	return NULL;
 }
 

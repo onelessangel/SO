@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
+#include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 
@@ -16,19 +17,22 @@ int main(void)
 
 	pch = strstr(str, "simple");
 	if (pch != NULL) {
-		write(1, pch, strlen(pch));
-		write(1, "\n", 1);
+		// write(1, pch, strlen(pch));
+		// write(1, "\n", 1);
+		puts(pch);
 	}
+	// write(1, "hello\n", 6);
 
 	/*
 	 * Search for the last index of "test" in "This is a test string for testing".
-	 * pch should point to "testing.
+	 * pch should point to "testing".
 	 */
 	p = strrstr(string, "test");
 	if (p != NULL) {
 		write(1, p, strlen(p));
 		write(1, "\n", 1);
 	}
+	write(1, "hello\n", 6);
 
 	return 0;
 }
