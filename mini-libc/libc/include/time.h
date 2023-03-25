@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 
+#include <internal/types.h>
+
 int nanosleep(const struct timespec *req, struct timespec *rem);
 
 #ifdef __cplusplus

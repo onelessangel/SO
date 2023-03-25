@@ -7,7 +7,7 @@ CFLAGS += -g -O0
 .PHONY: all clean
 
 SRCS = syscall.c \
-       process/exit.c \
+       process/exit.c process/nanosleep.c process/sleep.c \
        mm/malloc.c mm/mmap.c mm/mem_list.c \
        string/string.c \
        stat/fstatat.c stat/fstat.c stat/stat.c \
@@ -16,8 +16,6 @@ SRCS = syscall.c \
        io/puts.c \
        errno.c \
        crt/__libc_start_main.c
-
-# TODO: Add sleep.c dependency.
 
 OBJS = $(patsubst %.c,%.o,$(SRCS))
 

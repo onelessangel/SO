@@ -1,0 +1,14 @@
+{
+	"files.associations": {
+		"errno.h": "c",
+		"unistd.h": "c",
+		"syscall.h": "c",
+		"time.h": "c",
+		"stdio.h": "c",
+		"string.h": "c",
+		"types.h": "c",
+		"io.h": "c",
+		"stat.h": "c",
+		"syscall_list.h": "c"
+	}
+}
