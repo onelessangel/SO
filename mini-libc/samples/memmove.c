@@ -3,6 +3,19 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdio.h>
+
+static int test_memmove_src_before_dst(void)
+{
+	char src[128];
+	char *dst = src + 16;
+
+	memset(src, 'a', 128);
+	memset(dst, 'b', 112);
+	memmove(dst, src, 112);
+
+	return dst[0] == 'a' && dst[1] == 'a';
+}
 
 int main(void)
 {
@@ -18,6 +31,7 @@ int main(void)
 	dst[strlen(src)] = '\0';
 
 	write(1, dst, strlen(dst));
+	puts("hello");
 
 	/*
 	 * dst and src overlap.
@@ -25,6 +39,24 @@ int main(void)
 	 */
 	memmove(str2 + 20, str2 + 15, 11);
 	write(1, str2, strlen(str2));
+
+	char my_string[] = "Mama are mere.";
+
+	memmove(my_string +  20, my_string, strlen(my_string));
+	puts(my_string);
+
+
+	
+
+	char source[128];
+	char *destination = source + 16;
+
+	memset(source, 'a', 128);
+	memset(destination, 'b', 112);
+	memmove(destination, source, 112);
+
+	puts(&destination[0]);
+	puts(&destination[1]);
 
 	return 0;
 }

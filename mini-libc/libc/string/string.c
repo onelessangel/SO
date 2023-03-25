@@ -178,7 +178,8 @@ char *strrstr(const char *haystack, const char *needle)
 		return haystack;
 	}
 
-	char *prev_ptr = NULL, *ptr = NULL;
+	char *prev_ptr = NULL;
+	char *ptr = NULL;
 
 	while (*haystack != '\0') {
 		ptr = strstr(haystack, needle);
@@ -196,27 +197,51 @@ char *strrstr(const char *haystack, const char *needle)
 
 void *memcpy(void *destination, const void *source, size_t num)
 {
-	/* TODO: Implement memcpy(). */
+	char *dest = destination;
+	char *src = source;
+
+	while (num--) {
+		*dest++ = *src++;
+	}
 
 	return destination;
 }
 
 void *memmove(void *destination, const void *source, size_t num)
 {
-	/* TODO: Implement memmove(). */
+	char *dest = destination;
+	char *src = source;
+
+	if (dest < src) {
+		return memcpy(destination, source, num);
+	}
+
+	// memory overlaps and destination is after source
+	dest = dest + (num - 1);
+	src = src + (num - 1);
+
+	while (num--) {
+		*dest-- = *src--;
+	}
 
 	return destination;
 }
 
 int memcmp(const void *ptr1, const void *ptr2, size_t num)
 {
-	/* TODO: Implement memcmp(). */
-	return -1;
+	const char *str1 = ptr1;
+	const char *str2 = ptr2;
+
+	return strncmp(str1, str2, num);
 }
 
 void *memset(void *source, int value, size_t num)
 {
-	/* TODO: Implement memset(). */
+	char *src = source;
+
+	while (num--) {
+		*src++ = value;
+	}
 
 	return source;
 }
