@@ -40,4 +40,4 @@ echo -n "Grade                           "
 echo -n " .................................. "
 printf "%4.2f\n" "$total_grade"
 
-rm results.txt
+# rm results.txt
