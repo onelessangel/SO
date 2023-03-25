@@ -17,7 +17,6 @@ int main(void)
 
 	strcpy(dst, src);
 	write(1, dst, strlen(dst));
-	// write(1, "hello\n", 6);
 
 	/* strncpy - str2 is set to str1 (To be or not to be) */
 	strncpy(str2, str1, sizeof(str2));
@@ -37,6 +36,7 @@ int main(void)
 	strcat(str4, "concatenated.");
 	write(1, str4, strlen(str4));
 	write(1, "\n", 1);
+	write(1, "hello\n", 6);
 
 	/* strncat - concatenate str5 with partial copy of str6 - (To be or not) */
 	strcpy(str5, "To be ");
