@@ -22,29 +22,85 @@ char *strcpy(char *destination, const char *source)
 
 char *strncpy(char *destination, const char *source, size_t len)
 {
-	/* TODO: Implement strncpy(). */
+	if (destination == NULL || source == NULL) {
+		return NULL;
+	}
+
+	size_t i = 0;
+
+	for (; i < len; i++) {
+		if (source[i] == '\0') {
+			break;
+		}
+
+		destination[i] = source[i];
+	}
+
+	for (; i < len; i++) {
+		destination[i] = '\0';
+	}
 
 	return destination;
 }
 
 char *strcat(char *destination, const char *source)
 {
-	/* TODO: Implement strcat(). */
+	if (destination == NULL || source == NULL) {
+		return NULL;
+	}
+
+	size_t i = 0, j = 0;
+
+	while (destination[i] != '\0') {
+		i++;
+	}
+
+	while (source[j] != '\0') {
+		destination[i++] = source[j++];
+	}
+
+	destination[i] = '\0';
 
 	return destination;
 }
 
 char *strncat(char *destination, const char *source, size_t len)
 {
-	/* TODO: Implement strncat(). */
+	if (destination == NULL || source == NULL) {
+		return NULL;
+	}
+
+	size_t i = strlen(destination);
+	size_t j = 0;
+
+	for (; j < len; i++, j++) {
+		destination[i] = source[j];
+	}
+
+	destination[i] = '\0';
 
 	return destination;
 }
 
 int strcmp(const char *str1, const char *str2)
 {
-	/* TODO: Implement strcmp(). */
-	return -1;
+	size_t i = 0;
+	int res;
+
+	while (str1[i] != '\0' || str2[i] != '\0') {
+		res = (int)str1[i] - (int)str2[i];
+
+		if (res != 0) {
+			break;
+		}
+		// if (*ptr1 == *ptr2) {
+		// 	ptr1++;
+		// 	ptr2++;
+		// 	continue;
+		// }
+	}
+
+	return res;
 }
 
 int strncmp(const char *str1, const char *str2, size_t len)
