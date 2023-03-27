@@ -7,9 +7,14 @@
 #include <string.h>
 #include <stdlib.h>
 
+#define ALIGNMENT 16
+
 void *malloc(size_t size)
 {
-	/* TODO: Implement malloc(). */
+	if (size == 0) {
+		return NULL;
+	}
+
 	return NULL;
 }
 

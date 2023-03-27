@@ -15,7 +15,7 @@ int open(const char *filename, int flags, ...)
 	mode = va_arg(valist, mode_t);
 	va_end(valist);
 
-	// fd, -error otherwise
+	// fd if success, -error otherwise
 	int fd = syscall(__NR_open, filename, flags, mode);
 
 	if (fd < 0) {
