@@ -19,6 +19,7 @@ struct mem_list {
 extern struct mem_list mem_list_head;
 
 void mem_list_init(void);
+struct mem_list *mem_list_alloc(void);
 int mem_list_add(void *start, size_t len);
 struct mem_list *mem_list_find(void *start);
 int mem_list_del(void *start);

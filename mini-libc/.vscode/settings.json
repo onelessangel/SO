@@ -11,6 +11,9 @@
 		"stat.h": "c",
 		"syscall_list.h": "c",
 		"fcntl.h": "c",
-		"stdarg.h": "c"
+		"stdarg.h": "c",
+		"mman.h": "c",
+		"mem_list.h": "c",
+		"essentials.h": "c"
 	}
 }
