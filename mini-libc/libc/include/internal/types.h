@@ -29,6 +29,9 @@ struct timespec {
     long   tv_nsec;    /* nanoseconds */
 };
 
+typedef long intptr_t;
+
+
 #define NULL	((void *) 0)
 
 #endif

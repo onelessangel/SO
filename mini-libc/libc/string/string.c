@@ -127,7 +127,7 @@ char *strchr(const char *str, int c)
 
 char *strrchr(const char *str, int c)
 {
-	const char *last = NULL;
+	char *last = NULL;
 
 	while (*str != '\0') {
 		if (*str == c) {
