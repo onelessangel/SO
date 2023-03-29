@@ -30,7 +30,7 @@ void *malloc(size_t size)
 
 void *calloc(size_t nmemb, size_t size)
 {
-	return memset(malloc(size), 0, nmemb);
+	return memset(malloc(nmemb * size), 0, nmemb * size);
 }
 
 void free(void *ptr)
