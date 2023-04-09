@@ -119,7 +119,7 @@ char *strchr(const char *str, int c)
 
 	// check c == '\0'
 	if (*str == c) {
-		return str;
+		return (char *)str;
 	}
 
 	return NULL;
@@ -131,7 +131,7 @@ char *strrchr(const char *str, int c)
 
 	while (*str != '\0') {
 		if (*str == c) {
-			last = str;
+			last = (char *)str;
 		}
 
 		str++;
@@ -139,7 +139,7 @@ char *strrchr(const char *str, int c)
 
 	// check c == '\0'
 	if (*str == c) {
-		last = str;
+		last = (char *)str;
 	}
 
 	return last;
@@ -148,7 +148,7 @@ char *strrchr(const char *str, int c)
 char *strstr(const char *haystack, const char *needle)
 {
 	if (strlen(needle) == 0) {
-		return haystack;
+		return (char *)haystack;
 	}
 
 	size_t i;
@@ -161,7 +161,7 @@ char *strstr(const char *haystack, const char *needle)
 		}
 
 		if (needle[i] == '\0') {
-			return haystack;
+			return (char *)haystack;
 		}
 
 		haystack++;
@@ -175,7 +175,7 @@ char *strrstr(const char *haystack, const char *needle)
 	size_t needle_len = strlen(needle);
 
 	if (needle_len == 0) {
-		return haystack;
+		return (char *)haystack;
 	}
 
 	char *prev_ptr = NULL;
@@ -198,7 +198,7 @@ char *strrstr(const char *haystack, const char *needle)
 void *memcpy(void *destination, const void *source, size_t num)
 {
 	char *dest = destination;
-	char *src = source;
+	char *src = (char *)source;
 
 	while (num--) {
 		*dest++ = *src++;
@@ -210,7 +210,7 @@ void *memcpy(void *destination, const void *source, size_t num)
 void *memmove(void *destination, const void *source, size_t num)
 {
 	char *dest = destination;
-	char *src = source;
+	char *src = (char *)source;
 
 	if (dest < src) {
 		return memcpy(destination, source, num);
