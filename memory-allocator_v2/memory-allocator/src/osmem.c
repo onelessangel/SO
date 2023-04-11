@@ -57,8 +57,12 @@ void *os_malloc(size_t size)
 		}
 
 		printf("sunt la capatul puterilor\n");
-		printf("%d \n", aligned_size);
-		printf("%d\n", block->size);
+		printf("aligned size: %d \n", aligned_size);
+		printf("block size: %d\n", block->size);
+		printf("remaining size: %d\n", block->size - aligned_size);
+		if (block->next) {
+			printf("YUHUUU\n");
+		}
 		split_block(block, aligned_size);
 		block->status = STATUS_ALLOC;
 
