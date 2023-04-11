@@ -18,7 +18,7 @@ $(BUILDDIR):
 	mkdir -p $(BUILDDIR)
 
 $(BUILDDIR)/%: $(SOURCEDIR)/%.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LDLIBS)
 
 src:
 	make -C $(SRC_PATH)
