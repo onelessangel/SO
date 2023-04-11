@@ -36,11 +36,28 @@ struct block_meta *get_free_block(struct block_meta *base, size_t size)
 	struct block_meta *curr = base;
 
 	// find first usable block
-	while (curr && !block_is_usable(curr, size)) {
+	// while (curr && !block_is_usable(curr, size)) {
+	// 	curr = curr->next;
+	// }
+
+	// return curr;
+
+	struct block_meta *best_find = NULL;;
+	int min_size = INT_MAX;
+
+	while (curr) {
+		if (curr->size > size && curr->status == STATUS_FREE && curr->size < min_size) {
+			if (curr->size == size) {
+				return curr;
+			}
+			min_size = curr->size;
+			best_find = curr;
+		}
 		curr = curr->next;
+
 	}
 
-	return curr;
+	return best_find;
 }
 
 void split_block(struct block_meta *block, size_t size)
