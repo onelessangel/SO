@@ -46,7 +46,7 @@ struct block_meta *get_free_block(struct block_meta *base, size_t size)
 void split_block(struct block_meta *block, size_t size)
 {
 	size_t aligned_size = ALIGN(size);
-	size_t remaining_size = block->size - (aligned_size + METADATA_SIZE);
+	size_t remaining_size = block->size - aligned_size;
 
 	if (remaining_size < METADATA_SIZE + 1) {
 		return;
