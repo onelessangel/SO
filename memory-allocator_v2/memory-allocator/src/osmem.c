@@ -5,7 +5,7 @@
 // #include "../utils/printf.h"
 
 struct block_meta *global_base = NULL;
-struct block_meta *last;
+struct block_meta *last = NULL;
 
 void *os_malloc(size_t size)
 {
@@ -16,6 +16,8 @@ void *os_malloc(size_t size)
 	}
 
 	size_t aligned_size = ALIGN(size);
+	printf("dimensiunea aliniata: %d\n", aligned_size);
+	printf("dimensiunea aliniata: %d\n", aligned_size);
 	// static bool heap_is_init = false;
 
 	// if (!heap_is_init) {
@@ -29,27 +31,51 @@ void *os_malloc(size_t size)
 		// block = get_free_block(global_base, )
 		// facem request_space de la ultimul block free
 		if (global_base == NULL) {
+			printf("uga-buga\n");
 			global_base = request_space(NULL, MMAP_THRESHOLD - METADATA_SIZE);
+
+			printf("hellllllllllloooooooooo\n");
 
 			split_block(global_base, aligned_size);			
 			global_base->status = STATUS_ALLOC;
 
+			printf("hellllllllllloooooooooo\n");
 			last = global_base;
 
 			return (void *)(global_base + 1);
 		}
 
-		coalesce_blocks(global_base);
+		printf("am trecut de primul if\n");
+
+		// coalesce_blocks(global_base);
 
 		block = get_free_block(global_base, aligned_size);
 
-		// nu exista destul spatiu liber
 		if (block == NULL || block->size < aligned_size) {
-			block = request_space(last, MMAP_THRESHOLD - METADATA_SIZE);
+			block = request_space(last, aligned_size);
+			printf("HUA\n");
 		}
 
+		printf("sunt la capatul puterilor\n");
+		printf("%d \n", aligned_size);
+		printf("%d\n", block->size);
 		split_block(block, aligned_size);
 		block->status = STATUS_ALLOC;
+
+		last = block;
+
+		// printf("size: %d\n", block->size);
+
+		// // nu exista destul spatiu liber
+		// if (block == NULL || block->size < aligned_size) {
+		// 	block = request_space(last, MMAP_THRESHOLD - METADATA_SIZE);
+		// }
+
+		// split_block(block, aligned_size);
+		// block->status = STATUS_ALLOC;
+
+		// last = block;
+
 		return (void *)(block + 1);
 		// block = request_space(NULL, MMAP_THRESHOLD - METADATA_SIZE);
 		// coalesce_blocks(block);
@@ -104,9 +130,9 @@ void os_free(void *ptr)
 
 	printf("buuuuuuuna\n");
 
-	while (curr && curr->status == STATUS_ALLOC) {
+	if (curr->status == STATUS_ALLOC) {
 		curr->status = STATUS_FREE;
-		curr = curr->next;
+		// curr = curr->next;
 	}
 
 	// printf("STATUS: %d\n", curr->status);
