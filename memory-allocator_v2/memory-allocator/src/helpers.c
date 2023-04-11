@@ -45,8 +45,14 @@ struct block_meta *get_free_block(struct block_meta *base, size_t size)
 
 void split_block(struct block_meta *block, size_t size)
 {
+	// if (block != NULL) {
+	// 	printf("%ld\n", block->size);
+	// }
+	// printf("%ld\n", block->size);
 	size_t aligned_size = ALIGN(size);
 	size_t remaining_size = block->size - aligned_size;
+
+	// printf("remaining size: %d\n", remaining_size);
 
 	if (remaining_size < METADATA_SIZE + 1) {
 		return;
@@ -54,10 +60,12 @@ void split_block(struct block_meta *block, size_t size)
 
 	// tinker alignment
 	struct block_meta *second_block;
-	second_block = block + aligned_size + METADATA_SIZE;
-	second_block->next = block->next;
-	second_block->size = ALIGN(remaining_size);
-	second_block->status = block->status;
+	second_block = block + ALIGN(aligned_size + METADATA_SIZE);
+
+	// printf("helluu helluu\n");
+	// second_block->next = block->next;
+	// second_block->size = ALIGN(remaining_size);
+	// second_block->status = block->status;
 
 	block->size = aligned_size;
 	block->next = second_block;
