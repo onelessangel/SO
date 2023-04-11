@@ -74,16 +74,20 @@ void split_block(struct block_meta *block, size_t size)
 void coalesce_blocks(struct block_meta *base)
 {
 	struct block_meta *curr = base;
-	size_t total_size = curr->size;
+	// size_t total_size = curr->size;
+	int counter = 0;
 
 	while (curr) {
-		if (curr->status == STATUS_FREE && curr->next->status == STATUS_FREE) {
-			curr->size += ALIGN((curr->next)->size + METADATA_SIZE);
+		if (curr->next && curr->status == STATUS_FREE && (curr->next)->status == STATUS_FREE) {
+			curr->size += (curr->next)->size + METADATA_SIZE;
 			curr->next = (curr->next)->next;
 		} else {
 			curr = curr->next;
 		}
+		counter++;
 	}
+
+	// printf("counter: %d\n", counter);
 }
 
 void init_heap(struct block_meta **base)

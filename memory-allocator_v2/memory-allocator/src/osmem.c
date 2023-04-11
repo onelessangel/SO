@@ -16,7 +16,7 @@ void *os_malloc(size_t size)
 	}
 
 	size_t aligned_size = ALIGN(size);
-	printf("dimensiunea aliniata: %d\n", aligned_size);
+	printf("dimensiunea: %d\n", size);
 	printf("dimensiunea aliniata: %d\n", aligned_size);
 	// static bool heap_is_init = false;
 
@@ -45,28 +45,28 @@ void *os_malloc(size_t size)
 			return (void *)(global_base + 1);
 		}
 
-		printf("am trecut de primul if\n");
+		// printf("am trecut de primul if\n");
 
-		// coalesce_blocks(global_base);
+		coalesce_blocks(global_base);
 
 		block = get_free_block(global_base, aligned_size);
 
 		if (block == NULL || block->size < aligned_size) {
 			block = request_space(last, aligned_size);
-			printf("HUA\n");
+			// printf("HUA\n");
 		}
 
-		printf("sunt la capatul puterilor\n");
-		printf("aligned size: %d \n", aligned_size);
-		printf("block size: %d\n", block->size);
-		printf("remaining size: %d\n", block->size - aligned_size);
-		if (block->next) {
-			printf("YUHUUU\n");
-		}
+		// printf("sunt la capatul puterilor\n");
+		// printf("aligned size: %d \n", aligned_size);
+		// printf("block size: %d\n", block->size);
+		// printf("remaining size: %d\n", block->size - aligned_size);
+		// if (block->next) {
+		// 	printf("YUHUUU\n");
+		// }
 		split_block(block, aligned_size);
 		block->status = STATUS_ALLOC;
 
-		last = block;
+		last = block;	
 
 		// printf("size: %d\n", block->size);
 
@@ -80,7 +80,7 @@ void *os_malloc(size_t size)
 
 		// last = block;
 
-		return (void *)(block + 1);
+		// return (void *)(block + 1);
 		// block = request_space(NULL, MMAP_THRESHOLD - METADATA_SIZE);
 		// coalesce_blocks(block);
 
@@ -95,7 +95,7 @@ void *os_malloc(size_t size)
 		
 
 		// DIE??
-
+		printf("                    \n");
 		return (void *)(block + 1);
 	}
 
