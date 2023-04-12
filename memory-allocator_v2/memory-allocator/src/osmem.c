@@ -69,74 +69,13 @@ void *os_malloc(size_t size)
 			block->status = STATUS_ALLOC;
 			// printf("HUA\n");
 		} else {
-			// size_t leftover_size = aligned_size - last->size;
-			// block = request_space(last, leftover_size);
 			split_block(block, aligned_size);
-			// find_free_block(global_base, &last, aligned_size);
-			// block = last;
 		}
 
 		block->status = STATUS_ALLOC;
 
 		printf("                    \n");
 		return (void *)(block + 1);
-
-
-		// return NULL;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-		// printf("sunt la capatul puterilor\n");
-		// printf("aligned size: %d \n", aligned_size);
-		// printf("block size: %d\n", block->size);
-		// printf("remaining size: %d\n", block->size - aligned_size);
-		// if (block->next) {
-		// 	printf("YUHUUU\n");
-		// }
-		// split_block(block, aligned_size);
-		// block->status = STATUS_ALLOC;
-
-		// last = block;	
-
-		// printf("size: %d\n", block->size);
-
-		// // nu exista destul spatiu liber
-		// if (block == NULL || block->size < aligned_size) {
-		// 	block = request_space(last, MMAP_THRESHOLD - METADATA_SIZE);
-		// }
-
-		// split_block(block, aligned_size);
-		// block->status = STATUS_ALLOC;
-
-		// last = block;
-
-		// return (void *)(block + 1);
-		// block = request_space(NULL, MMAP_THRESHOLD - METADATA_SIZE);
-		// coalesce_blocks(block);
-
-		// split_block(block, aligned_size);
-		// block->size = aligned_size;
-		// block->status = STATUS_ALLOC;
-		// block->next = NULL;
-
-		// if (global_base == NULL) {
-		// 	global_base = block;
-		// }
-		
-
-		// DIE??
 		
 	}
 
@@ -153,8 +92,6 @@ void *os_malloc(size_t size)
 		global_base = block;
 	}
 
-	// printf("%d", global_base->size);
-
 	return (void *)(block + 1);
 }
 
@@ -170,8 +107,8 @@ void os_free(void *ptr)
 	}
 
 	struct block_meta *curr = get_block_ptr(ptr);
-	printf("%d\n", curr->status);
-	printf("%d\n", curr->size);
+	// printf("%d\n", curr->status);
+	// printf("%d\n", curr->size);
 
 	printf("buuuuuuuna\n");
 
@@ -186,38 +123,26 @@ void os_free(void *ptr)
 		printf("sunt aici\n");
 		munmap(curr, curr->size + METADATA_SIZE);
 		printf("still alive\n");
-		// curr->status = STATUS_FREE;
-		// printf("status: %d\n", curr->status);
-		// curr = curr->next;
 	}
 }
 
 void *os_calloc(size_t nmemb, size_t size)
 {
-	if (size <= 0) {
+	if (size == 0 || nmemb == 0) {
 		return NULL;
 	}
 
-	size_t aligned_size = ALIGN(size * nmemb);
-	printf("dimensiunea: %d\n", size);
-	printf("dimensiunea aliniata: %d\n", aligned_size);
+	size_t total_size = size * nmemb;
+	size_t aligned_size = ALIGN(total_size);
 
 	int page_size = getpagesize();
-	// static bool heap_is_init = false;
-
-	// if (!heap_is_init) {
-	// 	init_heap(&global_base);
-	// }
-
 	struct block_meta *block;
 
 	if (aligned_size + METADATA_SIZE < page_size) {
-		printf_("am ajuns aici\n");
-		// block = get_free_block(global_base, )
-		// facem request_space de la ultimul block free
+		// printf_("am ajuns aici\n");
 		if (global_base == NULL) {
-			printf("uga-buga\n");
-			global_base = request_space(&global_base, NULL, page_size - METADATA_SIZE);
+			// printf("uga-buga\n");
+			global_base = request_space(&global_base, NULL, MMAP_THRESHOLD - METADATA_SIZE);
 
 			// printf("hellllllllllloooooooooo\n");
 

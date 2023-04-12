@@ -184,7 +184,7 @@ void split_block(struct block_meta *block, size_t size)
 	// printf("remaining size: %d\n", remaining_size);
 
 	if (block->size - aligned_size < METADATA_SIZE + ALIGN(1)) {
-		block->size = aligned_size;		//
+		// block->size = aligned_size;		//
 		block->status = STATUS_ALLOC;
 		return;
 	}
