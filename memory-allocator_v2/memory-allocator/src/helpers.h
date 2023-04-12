@@ -34,7 +34,7 @@ bool block_is_usable(struct block_meta *block, size_t size);
 // struct block_meta *find_free_block(struct block_meta *base, struct block_meta **last, size_t size);
 // struct block_meta *get_free_block(struct block_meta *base, size_t size);
 struct block_meta *get_best_fit(struct block_meta *base, struct block_meta **last, size_t size);
-void split_block(struct block_meta *block, size_t size);
+void split_block(struct block_meta *block, size_t size, size_t nmemb);
 void coalesce_blocks(struct block_meta *base);
 void init_heap(struct block_meta **base);
 struct block_meta *get_block_ptr(void *ptr);
@@ -52,3 +52,4 @@ struct block_meta *get_block_ptr(void *ptr);
 #define MMAP_THRESHOLD	(128 * 1024)
 #define METADATA_SIZE	ALIGN((sizeof(struct block_meta)))
 
+#define MALLOC_NMEMB	1

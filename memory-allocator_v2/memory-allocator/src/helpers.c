@@ -87,98 +87,15 @@ struct block_meta *get_best_fit(struct block_meta *base, struct block_meta **las
 	}
 
 	return best_fit;
-
-
-	// struct block_meta *best_fit = block;
-	// size_t min_size = INT_MAX;
-
-	// if (block == NULL) {
-	// 	return NULL;
-	// }
-
-	// min_size = block->size;
-
-	// while (block != NULL) {
-	// 	if (block->size < min_size) {
-	// 		min_size = block->size;
-	// 		best_fit = block;
-	// 	}
-
-	// 	block = find_free_block(base, last, size);
-	// }
-
-	// return best_fit;
-
-	// // find first usable block
-	// // while (curr && !block_is_usable(curr, size)) {
-	// // 	curr = curr->next;
-	// // }
-
-	// // return curr;
-
-	// struct block_meta *best_find = curr;
-	// size_t min_size = INT_MAX;
-
-	// while (curr) {
-	// // 	// if (curr->size > size && curr->status == STATUS_FREE && curr->size < min_size) {
-	// // 	// 	if (curr->size == size) {
-	// // 	// 		return curr;
-	// // 	// 	}
-	// // 	// 	min_size = curr->size;
-	// // 	// 	best_find = curr;
-	// // 	// }
-	// // 	// curr = curr->next;
-
-	// // 	// printf("aici curr NU e null\n");
-	// 	// if (!(curr->status == STATUS_FREE && curr->size >= size)) {
-	// 	// 	curr = curr->next;
-	// 	// 	continue;
-	// 	// }
-
-	// 	// if (curr->size == size) {
-	// 	// 	return curr;
-	// 	// }
-
-	// 	// if (curr->size < min_size) {
-	// 	// 	min_size = curr->size;
-	// 	// 	best_find = curr;
-	// 	// }
-
-	// 	// curr = curr->next;
-
-	// 	if (block_is_usable(curr, size)) {
-	// 		// if (curr->size == size) {
-	// 		// 	return curr;
-	// 		// }
-
-	// 		if (curr->size < min_size) {
-	// 			min_size = curr->size;
-	// 			best_find = curr;
-	// 		}
-
-	// 		// return curr;
-	// 	}
-
-	// 	curr = curr->next;
-	// }
-
-	// // if (curr == NULL && min_size == INT_MAX) {
-	// // 	return NULL;
-	// // }
-	// // return best_find;
-
-	// // return best_find;
-
-	// // return best_find;
 }
 
-void split_block(struct block_meta *block, size_t size)
+void split_block(struct block_meta *block, size_t size, size_t nmemb)
 {
 	// if (block != NULL) {
 	// 	printf("%ld\n", block->size);
 	// }
 	// printf("%ld\n", block->size);
-	size_t aligned_size = ALIGN(size);
+	size_t aligned_size = ALIGN(size * nmemb);
 	size_t remaining_size = block->size - aligned_size - METADATA_SIZE;
 
 	// printf("remaining size: %d\n", remaining_size);
