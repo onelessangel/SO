@@ -28,9 +28,12 @@ struct block_meta {
 	struct block_meta *next;
 };
 
-struct block_meta *request_space(struct block_meta *last, size_t size);
+// struct block_meta *request_space(struct block_meta *last, size_t size);
+struct block_meta *request_space(struct block_meta **base, struct block_meta *last, size_t size);
 bool block_is_usable(struct block_meta *block, size_t size);
-struct block_meta *get_free_block(struct block_meta *base, size_t size);
+// struct block_meta *find_free_block(struct block_meta *base, struct block_meta **last, size_t size);
+// struct block_meta *get_free_block(struct block_meta *base, size_t size);
+struct block_meta *get_best_fit(struct block_meta *base, struct block_meta **last, size_t size);
 void split_block(struct block_meta *block, size_t size);
 void coalesce_blocks(struct block_meta *base);
 void init_heap(struct block_meta **base);
@@ -41,10 +44,11 @@ struct block_meta *get_block_ptr(void *ptr);
 #define STATUS_ALLOC  1
 #define STATUS_MAPPED 2
 
-/* Sizes */
-#define MMAP_THRESHOLD	(128 * 1024)
-#define METADATA_SIZE	(sizeof(struct block_meta))
-
 /* Alignment - https://moss.cs.iit.edu/cs351/slides/slides-malloc.pdf */
 #define ALIGNMENT 8
 #define ALIGN(size) (((size) + (ALIGNMENT - 1)) & ~(ALIGNMENT - 1))
+
+/* Sizes */
+#define MMAP_THRESHOLD	(128 * 1024)
+#define METADATA_SIZE	ALIGN((sizeof(struct block_meta)))
+
