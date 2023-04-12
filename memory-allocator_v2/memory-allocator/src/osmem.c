@@ -36,7 +36,7 @@ void *os_malloc(size_t size)
 
 			// printf("hellllllllllloooooooooo\n");
 
-			split_block(global_base, aligned_size);
+			split_block(global_base, aligned_size, MALLOC_NMEMB);
 			global_base->status = STATUS_ALLOC;
 
 			// printf("hellllllllllloooooooooo\n");
@@ -69,7 +69,7 @@ void *os_malloc(size_t size)
 			block->status = STATUS_ALLOC;
 			// printf("HUA\n");
 		} else {
-			split_block(block, aligned_size);
+			split_block(block, aligned_size, MALLOC_NMEMB);
 		}
 
 		block->status = STATUS_ALLOC;
@@ -146,7 +146,7 @@ void *os_calloc(size_t nmemb, size_t size)
 
 			// printf("hellllllllllloooooooooo\n");
 
-			split_block(global_base, aligned_size);
+			split_block(global_base, size, nmemb);
 			global_base->status = STATUS_ALLOC;
 
 			// printf("hellllllllllloooooooooo\n");
@@ -181,7 +181,7 @@ void *os_calloc(size_t nmemb, size_t size)
 		} else {
 			// size_t leftover_size = aligned_size - last->size;
 			// block = request_space(last, leftover_size);
-			split_block(block, aligned_size);
+			split_block(block, size, nmemb);
 			// find_free_block(global_base, &last, aligned_size);
 			// block = last;
 		}
