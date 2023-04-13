@@ -15,7 +15,7 @@ The goal is to have a reliable library that accounts for explicit allocation, re
 
 The support code consists of three directories:
 
-- `allocator/` will contain your solution based on the `osmem.h` header file
+- `src/` will contain your solution based on the `osmem.h` header file
 - `tests/` contains the test suite and a Python script to verify your work
 - `utils/` contains an implementation for `printf()` function that does **not** use the heap
 
