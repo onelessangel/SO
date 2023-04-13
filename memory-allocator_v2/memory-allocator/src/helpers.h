@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-3-Clause */
 // Copyright Teodora Stroe 331CA 2023
 
 #pragma once
@@ -46,5 +47,5 @@ struct block_meta *get_block_ptr(void *ptr);
 #define ALIGN(size) (((size) + (ALIGNMENT - 1)) & ~(ALIGNMENT - 1))
 
 /* Sizes */
-#define MMAP_THRESHOLD	(128 * 1024)
-#define METADATA_SIZE	ALIGN((sizeof(struct block_meta)))
+#define THRESHOLD_MMAP	(128 * 1024)
+#define SIZE_METADATA	ALIGN((sizeof(struct block_meta)))

@@ -1,4 +1,4 @@
-// Copyright Teodora Stroe 331CA 2023
+# Copyright Teodora Stroe 331CA 2023
 
 CC = gcc
 CPPFLAGS = -I../utils
