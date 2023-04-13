@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: BSD-3-Clause */
+// Copyright Teodora Stroe 331CA 2023
 
 #pragma once
 
@@ -35,7 +35,6 @@ void split_block(struct block_meta *block, size_t size);
 void coalesce_free_blocks(struct block_meta *base);
 void merge_block(struct block_meta *old_block);
 struct block_meta *get_block_ptr(void *ptr);
-void truncate_block(struct block_meta *block, size_t size);
 
 /* Block metadata status values */
 #define STATUS_FREE   0

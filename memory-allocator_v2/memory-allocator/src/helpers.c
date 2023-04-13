@@ -1,3 +1,5 @@
+// Copyright Teodora Stroe 331CA 2023
+
 #include "helpers.h"
 
 struct block_meta *request_space(struct block_meta *base, size_t size)
@@ -25,7 +27,7 @@ struct block_meta *request_space(struct block_meta *base, size_t size)
 	}
 
 	temp->next = block;
-	
+
 	return block;
 }
 
