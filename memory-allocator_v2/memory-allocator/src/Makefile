@@ -1,9 +1,10 @@
+// Copyright Teodora Stroe 331CA 2023
+
 CC = gcc
 CPPFLAGS = -I../utils
 CFLAGS = -fPIC -Wall -Wextra -g
 LDFLAGS = -shared
 
-# TODO: Add additional sources
 SRCS = osmem.c helpers.c ../utils/printf.c
 OBJS = $(SRCS:.c=.o)
 TARGET = libosmem.so

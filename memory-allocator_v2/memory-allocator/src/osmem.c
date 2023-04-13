@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSD-3-Clause
+// Copyright Teodora Stroe 331CA 2023
 
 #include "osmem.h"
 #include "helpers.h"
@@ -148,6 +148,16 @@ void *os_calloc(size_t nmemb, size_t size)
 	return (void *)(block + 1);
 }
 
+static void *alloc_new_free_old(void *old_block_ptr, size_t alloc_size, size_t copy_size)
+{
+	struct block_meta *old_block = get_block_ptr(old_block_ptr);
+	struct block_meta *new_block = get_block_ptr(os_malloc(alloc_size));
+	memcpy(new_block + 1, old_block + 1, copy_size);
+	os_free(old_block_ptr);
+
+	return (void *)(new_block + 1);
+}
+
 void *os_realloc(void *ptr, size_t size)
 {
 	if (!ptr) {
@@ -160,7 +170,6 @@ void *os_realloc(void *ptr, size_t size)
 	}
 
 	struct block_meta *old_block = get_block_ptr(ptr);
-	struct block_meta *new_block;
 
 	if (old_block->status == STATUS_FREE) {
 		return NULL;
@@ -174,11 +183,7 @@ void *os_realloc(void *ptr, size_t size)
 
 	if (aligned_size < old_block->size) {
 		if (old_block->status == STATUS_MAPPED) {
-			new_block = get_block_ptr(os_malloc(aligned_size));
-			memcpy(new_block + 1, old_block + 1, aligned_size);
-			os_free(ptr);
-
-			return (void *)(new_block + 1);
+			return alloc_new_free_old(ptr, aligned_size, aligned_size);
 		}
 
 		split_block(old_block, aligned_size);
@@ -187,12 +192,7 @@ void *os_realloc(void *ptr, size_t size)
 	}
 
 	if (old_block->status == STATUS_MAPPED) {
-		new_block = get_block_ptr(os_malloc(aligned_size));
-		memcpy(new_block + 1, old_block + 1, old_block->size);
-		printf("fac free in STATUS MAPPED\n");
-		os_free(ptr);
-
-		return (void *)(new_block + 1);
+		return alloc_new_free_old(ptr, aligned_size, old_block->size);
 	}
 
 	size_t extra_size = aligned_size - old_block->size - METADATA_SIZE;
@@ -200,10 +200,7 @@ void *os_realloc(void *ptr, size_t size)
 	coalesce_free_blocks(global_base);
 
 	if (old_block->next == NULL) {
-		printf("blocul urmator nu exista\n");
-		new_block = request_space(global_base, extra_size);
-
-		if (new_block == NULL) {
+		if (request_space(global_base, extra_size) == NULL) {
 			return NULL;
 		}
 
@@ -219,9 +216,5 @@ void *os_realloc(void *ptr, size_t size)
 		return (void *)(old_block + 1);
 	}
 
-	new_block = get_block_ptr(os_malloc(aligned_size));
-	memcpy(new_block + 1, old_block + 1, old_block->size);
-	os_free(ptr);
-
-	return (void *)(new_block + 1);
+	return alloc_new_free_old(ptr, aligned_size, old_block->size);
 }
