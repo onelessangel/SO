@@ -36,7 +36,9 @@ bool block_is_usable(struct block_meta *block, size_t size);
 struct block_meta *get_best_fit(struct block_meta *base, struct block_meta **last, size_t size);
 void split_block(struct block_meta *block, size_t size);
 void coalesce_blocks(struct block_meta *base);
+void merge_block(struct block_meta *old_block);
 struct block_meta *get_block_ptr(void *ptr);
+void truncate_block(struct block_meta *block, size_t size);
 
 /* Block metadata status values */
 #define STATUS_FREE   0
@@ -50,5 +52,3 @@ struct block_meta *get_block_ptr(void *ptr);
 /* Sizes */
 #define MMAP_THRESHOLD	(128 * 1024)
 #define METADATA_SIZE	ALIGN((sizeof(struct block_meta)))
-
-#define MALLOC_NMEMB	1

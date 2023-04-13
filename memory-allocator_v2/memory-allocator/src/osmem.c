@@ -4,8 +4,10 @@
 #include "helpers.h"
 // #include "../utils/printf.h"
 
-struct block_meta *global_base = NULL;
-struct block_meta *last = NULL;
+struct block_meta *global_base;
+struct block_meta *last;
+struct block_meta *realloc_base;
+bool mmap_was_used;
 
 void *os_malloc(size_t size)
 {
@@ -44,38 +46,47 @@ void *os_malloc(size_t size)
 			if (!block) {
 				return NULL;
 			}
-
 		} else {
 			split_block(block, aligned_size);
 		}
 
 		block->status = STATUS_ALLOC;
 
-		return (void *)(block + 1);		
+		return (void *)(block + 1);
 	}
 
 	block = (struct block_meta *) mmap(NULL, METADATA_SIZE + aligned_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
 	block->size = aligned_size;
 	block->status = STATUS_MAPPED;
 	block->next = NULL;
-
-	if (!global_base) {
-		global_base = block;
-	}
+	mmap_was_used = true;
 
 	return (void *)(block + 1);
 }
 
 void os_free(void *ptr)
 {
-	if (global_base == NULL) {
+	if (ptr == NULL) {
+		return;
+	}
+
+	if (global_base == NULL && !mmap_was_used) {
 		return;
 	}
 
 	struct block_meta *curr = get_block_ptr(ptr);
 
+	// if (curr == NULL) {
+	// return;
+	// }
+
+	// printf("status in free: %d\n", curr->status);
+	// printf("hello\n");
+
 	if (curr->status == STATUS_ALLOC) {
+		// printf("am ajuns aici\n");
 		curr->status = STATUS_FREE;
+		// printf("am reusit\n");
 		return;
 	}
 
@@ -141,10 +152,7 @@ void *os_calloc(size_t nmemb, size_t size)
 	block->size = aligned_size;
 	block->status = STATUS_MAPPED;
 	block->next = NULL;
-
-	if (global_base == NULL) {
-		global_base = block;
-	}
+	mmap_was_used = true;
 
 	memset((void *)(block + 1), 0, aligned_size);
 	return (void *)(block + 1);
@@ -162,6 +170,8 @@ void *os_realloc(void *ptr, size_t size)
 	}
 
 	struct block_meta *old_block = get_block_ptr(ptr);
+	struct block_meta *block;
+	struct block_meta *new_block;
 
 	if (old_block->status == STATUS_FREE) {
 		return NULL;
@@ -169,25 +179,68 @@ void *os_realloc(void *ptr, size_t size)
 
 	size_t aligned_size = ALIGN(size);
 
-	if (old_block->size == size) {
+	if (old_block->size == aligned_size) {
 		return ptr;
 	}
 
-	if (size < old_block->size) {
-		printf("old size: %d\n", old_block->size);
-		printf("status alocare: %d\n", old_block->status);
-		// split_block(old_block, aligned_size);
+	if (aligned_size < old_block->size) {
+		// printf("old size: %d\n", old_block->size);
+		// printf("status alocare: %d\n", old_block->status);
 
-		// struct block_meta *temp = (old_block->next)->next;
-		// // os_free(old_block->next);
-		// old_block->next = temp;
+		if (old_block->status == STATUS_MAPPED) {
+			new_block = get_block_ptr(os_malloc(aligned_size));
+			memcpy(new_block + 1, old_block + 1, aligned_size);
+			printf("fac free in size < old_size\n");
+			os_free(ptr);
+
+			return (void *)(new_block + 1);
+		}
+
+		split_block(old_block, aligned_size);
 
 		return (void *)(old_block + 1);
 	}
 
-	// coalesce_blocks(global_base);
+	if (old_block->status == STATUS_MAPPED) {
+		new_block = get_block_ptr(os_malloc(aligned_size));
+		memcpy(new_block + 1, old_block + 1, old_block->size);
+		printf("fac free in STATUS MAPPED\n");
+		os_free(ptr);
 
+		return (void *)(new_block + 1);
+	}
 
+	size_t extra_size = aligned_size - old_block->size - METADATA_SIZE;
 
-	return NULL;
+	coalesce_blocks(global_base);
+
+	if (old_block->next == NULL) {
+		printf("blocul urmator nu exista\n");
+		block = request_space(&global_base, last, extra_size);
+
+		if (block == NULL) {
+			return NULL;
+		}
+
+		merge_block(old_block);
+
+		return (void *)(old_block + 1);
+	}
+
+	if ((old_block->next)->status == STATUS_FREE) {
+		printf("blocul urmtor e FREE\n");
+		// coalesce_blocks(global_base);  // !!
+		// split_block(old_block->next, extra_size);
+		merge_block(old_block);
+
+		return (void *)(old_block + 1);
+	}
+
+	printf("blocul urmator e alocat\n");
+	new_block = get_block_ptr(os_malloc(aligned_size));
+	memcpy(new_block + 1, old_block + 1, old_block->size);
+	printf("fac free pentru ca urmatorul bloc e alocat\n");
+	os_free(ptr);
+
+	return (void *)(new_block + 1);
 }
