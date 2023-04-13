@@ -1,6 +1,6 @@
 #include "helpers.h"
 
-struct block_meta *request_space(struct block_meta **base, struct block_meta *last, size_t size)
+struct block_meta *request_space(struct block_meta *base, size_t size)
 {
 	struct block_meta *block = sbrk(0);						// get current position
 	void *requested_chunk = sbrk(size + METADATA_SIZE);		// save space for struct
@@ -9,22 +9,23 @@ struct block_meta *request_space(struct block_meta **base, struct block_meta *la
 		return NULL;	// sbrk failed 
 	}
 
-	struct block_meta *temp = *base;
-
-	if (temp == NULL) {
-		*base = block;
-	} else {
-		while (temp->next) {
-			temp = temp->next;
-		}
-
-		temp->next = block;
-	}
+	struct block_meta *temp = base;
 
 	block->size = ALIGN(size);
 	block->next = NULL;
 	block->status = STATUS_FREE;
 
+	if (temp == NULL) {
+		base = block;
+		return block;
+	}
+
+	while (temp->next) {
+		temp = temp->next;
+	}
+
+	temp->next = block;
+	
 	return block;
 }
 
@@ -37,30 +38,13 @@ bool block_is_usable(struct block_meta *block, size_t size)
 	return block->status == STATUS_FREE && block->size >= size;
 }
 
-struct block_meta *find_free_block(struct block_meta *base, struct block_meta **last, size_t size)
-{
-	struct block_meta *current = base;
-
-	while (current && !block_is_usable(current, size)) {
-		*last = current;
-    	current = current->next;
-  	}
-
-	if (current->status == STATUS_FREE) {
-		return current;
-	}
-
-  	return NULL;
-}
-
-
 struct block_meta *get_best_fit(struct block_meta *base, struct block_meta **last, size_t size)
 {
 	struct block_meta *block = base;
 	struct block_meta *best_fit = NULL;
 
 	while(block) {
-		if (block->status == STATUS_FREE && block->size >= size) {
+		if (block_is_usable(block, size)) {
 			if (best_fit == NULL) {
 				best_fit = block;
 			} else if (block->size < best_fit->size) {
@@ -81,7 +65,6 @@ void split_block(struct block_meta *block, size_t size)
 	size_t remaining_size = block->size - aligned_size - METADATA_SIZE;
 
 	if (block->size - aligned_size < METADATA_SIZE + ALIGN(1)) {
-		// block->status = STATUS_ALLOC;
 		return;
 	}
 
@@ -97,32 +80,7 @@ void split_block(struct block_meta *block, size_t size)
 	block->status = STATUS_ALLOC;
 }
 
-// void truncate_block(struct block_meta *block, size_t size)
-// {
-// 	size_t aligned_size = ALIGN(size);
-// 	size_t remaining_size = block->size - aligned_size - METADATA_SIZE;
-
-// 	// VERIFICARE??
-
-// 	struct block_meta *second_block;
-// 	second_block = (struct block_meta *)((unsigned long)block + ALIGN(aligned_size + METADATA_SIZE));
-
-// 	second_block->next = block->next;
-// 	second_block->size = remaining_size;
-
-// 	block->size = aligned_size;
-// 	block->next = second_block;
-
-// 	if (block->status == STATUS_ALLOC) {
-// 		block->status = STATUS_ALLOC;
-// 		second_block->status = STATUS_FREE;
-// 	} else if (block->status == STATUS_MAPPED) {
-// 		block->status = STATUS_MAPPED;
-// 		munmap(second_block, second_block->size + METADATA_SIZE);
-// 	}
-// }
-
-void coalesce_blocks(struct block_meta *base)
+void coalesce_free_blocks(struct block_meta *base)
 {
 	struct block_meta *curr = base;
 
@@ -132,8 +90,7 @@ void coalesce_blocks(struct block_meta *base)
 		}
 
 		if (curr->status == STATUS_FREE && (curr->next)->status == STATUS_FREE) {
-			curr->size += (curr->next)->size + METADATA_SIZE;
-			curr->next = (curr->next)->next;
+			merge_block(curr);
 		} else {
 			curr = curr->next;
 		}
