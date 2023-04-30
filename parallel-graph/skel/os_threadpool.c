@@ -70,11 +70,33 @@ os_threadpool_t *threadpool_create(unsigned int nTasks, unsigned int nThreads)
 void *thread_loop_function(void *args)
 {
     // TODO
+    os_threadpool_t *tp = (os_threadpool_t *)args;
+    os_task_t *task;
+
+    while (!tp->should_stop) {
+        // extract task from task queue
+        pthread_mutex_lock(&tp->taskLock);
+        task = get_task(tp);
+        pthread_mutex_unlock(&tp->taskLock);
+
+        // execute task
+        task->task(task->argument);
+
+        // free task space
+        free(task);
+    }
+
     return NULL;
 }
 
 /* Stop the thread pool once a condition is met */
 void threadpool_stop(os_threadpool_t *tp, int (*processingIsDone)(os_threadpool_t *))
 {
-    // TODO
+    if (processingIsDone(tp) == 1) {
+        tp->should_stop = 1;
+    }
+
+    free(tp->tasks);
+    free(tp->threads);
+    free(tp);
 }
