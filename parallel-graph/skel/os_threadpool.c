@@ -22,15 +22,21 @@ void add_task_in_queue(os_threadpool_t *tp, os_task_t *t)
 {
     os_task_queue_t *current_node = tp->tasks;
 
-    while (current_node->next != NULL) {
+    // get to the last node in queue
+    while (current_node != NULL) {
         current_node = current_node->next;
     }
 
-    struct _node *next_node = malloc(sizeof(*next_node));
-    next_node->next = NULL;
-    next_node->task = t;
+    // struct os_task_queue_t *new_node = malloc(sizeof(*new_node));
+    // new_node->next = NULL;
+    // new_node->task = t;
 
-    current_node->next = next_node;
+    current_node = malloc(sizeof(*current_node));
+    current_node->next = NULL;
+    current_node->task = t;
+
+    // link new node to the queue
+    // current_node->next = new_node;
 }
 
 /* Get the head of task queue from threadpool */
@@ -55,13 +61,18 @@ os_threadpool_t *threadpool_create(unsigned int nTasks, unsigned int nThreads)
 
     tp->should_stop = 0;
     tp->num_threads = nThreads;
-    tp->threads = malloc(nThreads * sizeof(*tp->threads));
-    tp->tasks = malloc(nTasks * sizeof(*tp->tasks));
+    // tp->tasks = malloc(nTasks * sizeof(*tp->tasks));
+    // tp->tasks->next = NULL;
+    // tp->tasks->task = NULL;
+    tp->tasks = NULL;
 
-    if (pthread_mutex_init(&tp->taskLock, NULL) != 0) {
-		printf("[ERROR] Failed to init mutex\n");
-		return NULL;
-	}
+    pthread_mutex_init(&tp->taskLock, NULL);
+
+    // alloc and start threads in threadpool
+    tp->threads = malloc(nThreads * sizeof(*tp->threads));
+    for (int i = 0; i < tp->num_threads; i++) {
+        pthread_create(&tp->threads[i], NULL, thread_loop_function, tp);
+    }
 
     return tp;
 }
@@ -69,7 +80,6 @@ os_threadpool_t *threadpool_create(unsigned int nTasks, unsigned int nThreads)
 /* Loop function for threads */
 void *thread_loop_function(void *args)
 {
-    // TODO
     os_threadpool_t *tp = (os_threadpool_t *)args;
     os_task_t *task;
 
@@ -78,6 +88,10 @@ void *thread_loop_function(void *args)
         pthread_mutex_lock(&tp->taskLock);
         task = get_task(tp);
         pthread_mutex_unlock(&tp->taskLock);
+
+        if (task == NULL) {
+            continue;
+        }
 
         // execute task
         task->task(task->argument);
@@ -92,10 +106,23 @@ void *thread_loop_function(void *args)
 /* Stop the thread pool once a condition is met */
 void threadpool_stop(os_threadpool_t *tp, int (*processingIsDone)(os_threadpool_t *))
 {
-    if (processingIsDone(tp) == 1) {
-        tp->should_stop = 1;
+    // busy waiting
+    while (processingIsDone(tp) == 0) {
+
     }
 
+    // set threadpool stop variable
+    tp->should_stop = 1;
+
+    // join threads
+    for (int i = 0; i < tp->num_threads; i++) {
+        pthread_join(tp->threads[i], NULL);
+    }
+
+    // destroy threadpool mutex
+    pthread_mutex_destroy(&tp->taskLock);
+
+    // free threadpool
     free(tp->tasks);
     free(tp->threads);
     free(tp);
