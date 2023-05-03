@@ -20,34 +20,48 @@ os_task_t *task_create(void *arg, void (*f)(void *))
 /* Add a new task to threadpool task queue */
 void add_task_in_queue(os_threadpool_t *tp, os_task_t *t)
 {
-    os_task_queue_t *current_node = tp->tasks;
-
     // get to the last node in queue
-    while (current_node != NULL) {
-        current_node = current_node->next;
+    int count = 0;
+
+    struct _node *new_node = malloc(sizeof(*new_node));
+    new_node->next = NULL;
+    new_node->task = t;
+
+    if (tp->tasks == NULL) {
+        tp->tasks = new_node;
+        // // printf("count: %d\n", ++count);
+        return;
     }
 
-    // struct os_task_queue_t *new_node = malloc(sizeof(*new_node));
-    // new_node->next = NULL;
-    // new_node->task = t;
+    os_task_queue_t *current_node = tp->tasks;
 
-    current_node = malloc(sizeof(*current_node));
-    current_node->next = NULL;
-    current_node->task = t;
+    while (current_node->next != NULL) {
+        current_node = current_node->next;
+        count++;
+    }
 
     // link new node to the queue
-    // current_node->next = new_node;
+    current_node->next = new_node;
+
+    // // printf("count: %d\n", ++count);
+
+    // printf("BA\n");
 }
 
 /* Get the head of task queue from threadpool */
 os_task_t *get_task(os_threadpool_t *tp)
 {
+    pthread_mutex_lock(&tp->taskLock);
+
     if (tp->tasks == NULL) {
+        pthread_mutex_unlock(&tp->taskLock);
         return NULL;
     }
 
     os_task_t *target = tp->tasks->task;
     tp->tasks = tp->tasks->next;
+
+    pthread_mutex_unlock(&tp->taskLock);
 
     return target;
 }
@@ -61,9 +75,6 @@ os_threadpool_t *threadpool_create(unsigned int nTasks, unsigned int nThreads)
 
     tp->should_stop = 0;
     tp->num_threads = nThreads;
-    // tp->tasks = malloc(nTasks * sizeof(*tp->tasks));
-    // tp->tasks->next = NULL;
-    // tp->tasks->task = NULL;
     tp->tasks = NULL;
 
     pthread_mutex_init(&tp->taskLock, NULL);
@@ -83,21 +94,23 @@ void *thread_loop_function(void *args)
     os_threadpool_t *tp = (os_threadpool_t *)args;
     os_task_t *task;
 
-    while (!tp->should_stop) {
+    while (1) {
         // extract task from task queue
-        pthread_mutex_lock(&tp->taskLock);
+        // pthread_mutex_lock(&tp->taskLock);
         task = get_task(tp);
-        pthread_mutex_unlock(&tp->taskLock);
+        // pthread_mutex_unlock(&tp->taskLock);
 
-        if (task == NULL) {
-            continue;
+        if (task != NULL) {
+            // execute task
+            task->task(task->argument);
+
+            // free task space
+            free(task);
         }
 
-        // execute task
-        task->task(task->argument);
-
-        // free task space
-        free(task);
+        if (task == NULL && tp->should_stop == 1) {
+            break;
+        }
     }
 
     return NULL;

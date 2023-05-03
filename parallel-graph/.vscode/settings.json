@@ -1,0 +1,6 @@
+{
+	"files.associations": {
+		"os_list.h": "c",
+		"os_threadpool.h": "c"
+	}
+}
