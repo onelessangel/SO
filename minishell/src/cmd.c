@@ -93,12 +93,6 @@ static int shell_exit(void)
 	return SHELL_EXIT;
 }
 
-static bool shell_pwd()
-{
-
-	return true;
-}
-
 static void free_command_string(char ***argv, int argc)
 {
 	for (int i = 0; i < argc; i++) {
@@ -107,6 +101,18 @@ static void free_command_string(char ***argv, int argc)
 
 	free(*argv);
 	*argv = NULL;
+}
+
+static void redirect(int file_descriptor, const char *file_name, int flags, mode_t mode)
+{
+	int fd = open(file_name, flags, mode);
+	DIE(fd < 0, "Error: failed open");
+
+	int rc = dup2(fd, file_descriptor);
+	DIE(rc < 0, "Error: failed dup2");
+
+	rc = close(fd);
+	DIE(rc < 0, "Error: failed close");
 }
 
 /**
@@ -173,6 +179,7 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 	pid_t child_pid;
 	pid_t wait_ret;
 	int child_status;
+	int flags;
 
 	child_pid = fork();
 
@@ -181,6 +188,20 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 	case 0:
 		/* Child process */
 		// stdout file
+
+		if (s->in != NULL) {
+			flags = O_RDONLY;
+			redirect(STDIN_FILENO, s->in->string, flags, 0444);
+		}
+
+		if (s->out != NULL) {
+			redirect(STDOUT_FILENO, s->out->string, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+		}
+
+		if (s->err != NULL) {
+			redirect(STDERR_FILENO, s->err->string, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+		}
+			
 		err_code = execvp(argv[0], argv);
 		// DIE(1, "Error: failed execvp");
 		break;
@@ -194,10 +215,15 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 	default:
 		/* Parent process */
 		wait_ret = waitpid(child_pid, &child_status, 0);
-		// DIE(wait_ret < 0, "Error: failed waitpid");
+		DIE(wait_ret < 0, "Error: failed waitpid");
+		// printf("io_flags: %d\n", s->io_flags);		
 
 		if (WIFEXITED(child_status)) {
 			err_code = WEXITSTATUS(child_status);
+		}
+
+		if (WIFSTOPPED(child_status) || WIFSIGNALED(child_status)) {
+            kill(child_pid, SIGKILL);
 		}
 		break;
 	}
