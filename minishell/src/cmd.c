@@ -51,7 +51,7 @@ static int shell_set_env_var(word_t *cmd)
 
 	/* Check if value word is not NULL (it exists) */
 	if (cmd->next_part->next_part != NULL) {
-		value = cmd->next_part->next_part->string;
+		value = get_word(cmd->next_part->next_part);
 	}
 
 	// printf("var: %s\n", var);
@@ -141,16 +141,56 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 		// printf("dir: %s\n", s->params->string);
 		printf("argc: %d\n", argc);
 		if (argc == 2) {
+			int flags;
+
+			if (s->out != NULL) {
+				flags = O_WRONLY | O_CREAT;
+
+				if (s->io_flags == IO_OUT_APPEND) {
+					flags |= O_APPEND;
+				} else {
+					flags |= O_TRUNC;
+				}
+
+				int fd = open(s->out->string, flags, 0644);
+				DIE(fd < 0, "Error: failed open");
+
+				// int rc = dup2(fd, file_descriptor);
+				// DIE(rc < 0, "Error: failed dup2");
+
+				int rc = close(fd);
+				DIE(rc < 0, "Error: failed close");
+
+				// redirect(STDOUT_FILENO, s->out->string, flags, 0644);
+			}
+
+			if (s->err != NULL) {
+				flags = O_WRONLY | O_CREAT;
+
+				if (s->io_flags == IO_ERR_APPEND) {
+					flags |= O_APPEND;
+				} else {
+					flags |= O_TRUNC;
+				}
+
+				int fd = open(s->err->string, flags, 0644);
+				DIE(fd < 0, "Error: failed open");
+
+				// int rc = dup2(fd, file_descriptor);
+				// DIE(rc < 0, "Error: failed dup2");
+
+				int rc = close(fd);
+				DIE(rc < 0, "Error: failed close");
+
+				// redirect(STDERR_FILENO, s->err->string, flags, 0644);
+			}
+
 			err_code = shell_cd(s->params);
 			// printf("am intrat in comanda\n");
 		}
 		free_command_string(&argv, argc);
 		return err_code;
 	}
-
-	// printf("command: %s\n", argv[0]);
-
-	// printf("command size: %d\n", argc);
 
 	/* TODO: If variable assignment, execute the assignment and return
 	 * the exit status.
@@ -161,7 +201,7 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 	// printf("ELEMENT: %s\n", s->verb->next_part->string);
 	if (argc == 1 && s->verb->next_part &&
 		strcmp(s->verb->next_part->string, "=") == 0) {
-		printf("ENV VAR\n");
+		// printf("ENV VAR\n");
 
 		err_code = shell_set_env_var(s->verb);
 		free_command_string(&argv, argc);
@@ -181,29 +221,66 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 	int child_status;
 	int flags;
 
+	int argc_child;
+	char **argv_child;
+
 	child_pid = fork();
 
 	switch (child_pid)
 	{
 	case 0:
 		/* Child process */
-		// stdout file
+		
+		argv_child = get_argv(s, &argc_child);
 
 		if (s->in != NULL) {
 			flags = O_RDONLY;
 			redirect(STDIN_FILENO, s->in->string, flags, 0444);
 		}
 
-		if (s->out != NULL) {
-			redirect(STDOUT_FILENO, s->out->string, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+		if (s->out != NULL && s->err != NULL && strcmp(s->out->string, s->err->string) == 0) {
+			int fd = open(s->out->string, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+			DIE(fd < 0, "Error: failed open");
+
+			int rc = dup2(fd, STDOUT_FILENO);
+			DIE(rc < 0, "Error: failed dup2");
+
+			rc = dup2(fd, STDERR_FILENO);
+			DIE(rc < 0, "Error: failed dup2");
+
+			rc = close(fd);
+			DIE(rc < 0, "Error: failed close");
+		} else {
+			if (s->out != NULL) {
+				flags = O_WRONLY | O_CREAT;
+
+				if (s->io_flags == IO_OUT_APPEND) {
+					flags |= O_APPEND;
+				} else {
+					flags |= O_TRUNC;
+				}
+
+				redirect(STDOUT_FILENO, s->out->string, flags, 0644);
+			}
+
+			if (s->err != NULL) {
+				flags = O_WRONLY | O_CREAT;
+
+				if (s->io_flags == IO_ERR_APPEND) {
+					flags |= O_APPEND;
+				} else {
+					flags |= O_TRUNC;
+				}
+
+				redirect(STDERR_FILENO, s->err->string, flags, 0644);
+			}
 		}
 
-		if (s->err != NULL) {
-			redirect(STDERR_FILENO, s->err->string, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-		}
-			
-		err_code = execvp(argv[0], argv);
+		err_code = execvp(argv_child[0], argv_child);
 		// DIE(1, "Error: failed execvp");
+
+		// !!!!!!!!!!!!!!!!!!!!!!
+		exit(err_code);
 		break;
 
 	case -1:
@@ -216,14 +293,27 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 		/* Parent process */
 		wait_ret = waitpid(child_pid, &child_status, 0);
 		DIE(wait_ret < 0, "Error: failed waitpid");
-		// printf("io_flags: %d\n", s->io_flags);		
+		// printf("io_flags: %d\n", s->io_flags);	
+
+		// if (s->err != NULL) {
+		// 	printf("err_file: %s\n", s->err->string);
+		// }
+
+		// if (s->out != NULL) {
+		// 	printf("out_file: %s\n", s->out->string);
+		// }
+
+		// if (s->out != NULL && s->err != NULL && strcmp(s->out->string, s->err->string) == 0) {
+		// 	printf("fac &>\n");
+		// }
+		// else if (s->out != NULL) {
+		// 	printf("fac > sau >>\n");
+		// } else if (s->err != NULL) {
+		// 	printf("fac 2> sau 2>>\n");
+		// }
 
 		if (WIFEXITED(child_status)) {
 			err_code = WEXITSTATUS(child_status);
-		}
-
-		if (WIFSTOPPED(child_status) || WIFSIGNALED(child_status)) {
-            kill(child_pid, SIGKILL);
 		}
 		break;
 	}
@@ -280,22 +370,40 @@ int parse_command(command_t *c, int level, command_t *father)
 	switch (c->op) {
 	case OP_SEQUENTIAL:
 		/* TODO: Execute the commands one after the other. */
+
+		err_code = parse_command(c->cmd1, level + 1, c);
+		err_code = parse_command(c->cmd2, level + 1, c);
+
 		break;
 
 	case OP_PARALLEL:
 		/* TODO: Execute the commands simultaneously. */
 		break;
 
-	case OP_CONDITIONAL_NZERO:
+	case OP_CONDITIONAL_NZERO:	// ||
 		/* TODO: Execute the second command only if the first one
 		 * returns non zero.
 		 */
+
+		err_code = parse_command(c->cmd1, level + 1, c);
+
+		if (err_code != 0) {
+			err_code = parse_command(c->cmd2, level + 1, c);
+		}
+
 		break;
 
-	case OP_CONDITIONAL_ZERO:
+	case OP_CONDITIONAL_ZERO:	// &&
 		/* TODO: Execute the second command only if the first one
 		 * returns zero.
 		 */
+
+		err_code = parse_command(c->cmd1, level + 1, c);
+
+		if (err_code == 0) {
+			err_code = parse_command(c->cmd2, level + 1, c);
+		}
+		
 		break;
 
 	case OP_PIPE:
@@ -308,5 +416,5 @@ int parse_command(command_t *c, int level, command_t *father)
 		return SHELL_EXIT;
 	}
 
-	return 0; /* TODO: Replace with actual exit code of command. */
+	return err_code; /* TODO: Replace with actual exit code of command. */
 }
