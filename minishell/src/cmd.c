@@ -297,7 +297,7 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 		if (err_code == -1) {
         	fprintf(stderr, "Execution failed for '%s'\n", argv_child[0]);
 		}
-		
+
 		// !!!!!!!!!!!!!!!!!!!!!!
 		exit(err_code);
 		break;
@@ -349,8 +349,53 @@ static bool run_in_parallel(command_t *cmd1, command_t *cmd2, int level,
 		command_t *father)
 {
 	/* TODO: Execute cmd1 and cmd2 simultaneously. */
+	int err_code = 0;
 
-	return true; /* TODO: Replace with actual exit status. */
+	pid_t child_pid;
+	pid_t wait_ret;
+	int child_status;
+	// int flags;
+
+	// int argc_child;
+	// char **argv_child;
+
+	child_pid = fork();
+
+	switch (child_pid)
+	{
+	case 0:
+		/* Child process */
+		err_code = parse_command(cmd1, level, father);
+		// DIE(1, "Error: failed execvp");
+
+		// if (err_code != 0) {
+        // 	fprintf(stderr, "Execution failed for '%s'\n", argv_child[0]);
+		// }
+
+		// !!!!!!!!!!!!!!!!!!!!!!
+		exit(err_code);
+		break;
+ 
+	case -1:
+		/* Error */
+		// DIE(1, "Error; failed fork");
+		err_code = 1;
+		break;
+	
+	default:
+		/* Parent process */
+		err_code = parse_command(cmd2, level, father);
+
+		wait_ret = waitpid(child_pid, &child_status, 0);
+		DIE(wait_ret < 0, "Error: failed waitpid");
+
+		if (WIFEXITED(child_status)) {
+			err_code = WEXITSTATUS(child_status);
+		}
+		break;
+	}
+
+	return err_code; /* TODO: Replace with actual exit status. */
 }
 
 /**
@@ -397,6 +442,7 @@ int parse_command(command_t *c, int level, command_t *father)
 
 	case OP_PARALLEL:
 		/* TODO: Execute the commands simultaneously. */
+		err_code = run_in_parallel(c->cmd1, c->cmd2, level + 1, c);
 		break;
 
 	case OP_CONDITIONAL_NZERO:	// ||
@@ -429,6 +475,7 @@ int parse_command(command_t *c, int level, command_t *father)
 		/* TODO: Redirect the output of the first command to the
 		 * input of the second.
 		 */
+		
 		break;
 
 	default:
