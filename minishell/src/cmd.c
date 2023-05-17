@@ -27,7 +27,7 @@ static bool shell_cd(word_t *dir)
 
 	char *target = get_word(dir);
 
-	printf("director: %s\n", target);
+	// printf("director: %s\n", target);
 
 	int err_code = chdir(target);
 
@@ -141,7 +141,7 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 	
 	if (strcmp(argv[0], "cd") == 0) {
 		// printf("dir: %s\n", s->params->string);
-		printf("argc: %d\n", argc);
+		// printf("argc: %d\n", argc);
 		if (argc == 2) {
 			int flags;
 			
@@ -405,8 +405,138 @@ static bool run_on_pipe(command_t *cmd1, command_t *cmd2, int level,
 		command_t *father)
 {
 	/* TODO: Redirect the output of cmd1 to the input of cmd2. */
+	int pipefd[2];
+	pid_t child_pid;
+	pid_t second_child_pid;
+	int pipe_ret;
+	int err_code = 0;
+	int child_status;
+	int wait_ret;
 
-	return true; /* TODO: Replace with actual exit status. */
+	pipe_ret = pipe(pipefd);
+	DIE(pipe_ret == -1, "Error: incorrect pipe");
+
+	child_pid = fork();
+
+	switch (child_pid)
+	{
+	case 0:
+		/* Child process */
+
+		close(pipefd[READ]);
+
+		dup2(pipefd[WRITE], STDOUT_FILENO);
+		// DIE dup2
+
+		close(pipefd[WRITE]);
+
+		err_code = parse_command(cmd1, level, father);
+
+
+		// DIE(1, "Error: failed execvp");
+
+		// if (err_code != 0) {
+        // 	fprintf(stderr, "Execution failed for '%s'\n", argv_child[0]);
+		// }
+
+		// !!!!!!!!!!!!!!!!!!!!!!
+		exit(err_code);
+		break;
+ 
+	case -1:
+		/* Error */
+		// DIE(1, "Error; failed fork");
+
+		close(pipefd[READ]);
+		close(pipefd[WRITE]);
+		err_code = 1;
+		break;
+	
+	default:
+		/* Parent process */
+		// wait_ret = waitpid(child_pid, &child_status, 0);
+		// DIE(wait_ret < 0, "Error: failed waitpid");
+
+		// if (WIFEXITED(child_status)) {
+		// 	err_code = WEXITSTATUS(child_status);
+		// }
+
+		// printf("am ajuns aici!!!!!!\n");
+
+		second_child_pid = fork();
+
+		int second_child_status;
+
+		switch (second_child_pid)
+		{
+		case 0:
+			/* Child process */
+
+			close(pipefd[WRITE]);
+			dup2(pipefd[READ], STDIN_FILENO);
+			close(pipefd[READ]);
+
+			err_code = parse_command(cmd2, level, father);
+
+			// DIE(1, "Error: failed execvp");
+
+			// if (err_code != 0) {
+			// 	fprintf(stderr, "Execution failed for '%s'\n", argv_child[0]);
+			// }
+
+			// !!!!!!!!!!!!!!!!!!!!!!
+			exit(err_code);
+			break;
+	
+		case -1:
+			/* Error */
+			// DIE(1, "Error; failed fork");
+			close(pipefd[READ]);
+			close(pipefd[WRITE]);
+			err_code = 1;
+			break;
+		
+		default:
+			/* Parent process */
+			// wait_ret = waitpid(second_child_pid, &second_child_status, 0);
+			// DIE(wait_ret < 0, "Error: failed waitpid");
+
+			// if (WIFEXITED(second_child_status)) {
+			// 	err_code = WEXITSTATUS(second_child_status);
+			// }
+
+			// printf("i'm hereeeeee\n");
+
+			// close(pipefd[1]);
+			// dup2(pipefd[0], STDIN_FILENO);		
+
+			// err_code = parse_command(cmd2, level, father);
+
+			break;
+		}
+
+		close(pipefd[READ]);
+		close(pipefd[WRITE]);
+
+		wait_ret = waitpid(second_child_pid, &second_child_status, 0);
+		DIE(wait_ret < 0, "Error: failed waitpid");
+
+		if (WIFEXITED(second_child_status)) {
+			err_code = WEXITSTATUS(second_child_status);
+		}
+
+
+
+		// printf("am ajuns aici\n");
+
+			
+
+		// err_code = parse_command(cmd2, level, father);
+
+		break;
+	}
+
+	return err_code; /* TODO: Replace with actual exit status. */
 }
 
 /**
@@ -475,7 +605,7 @@ int parse_command(command_t *c, int level, command_t *father)
 		/* TODO: Redirect the output of the first command to the
 		 * input of the second.
 		 */
-		
+		err_code = run_on_pipe(c->cmd1, c->cmd2, level + 1, c);
 		break;
 
 	default:
