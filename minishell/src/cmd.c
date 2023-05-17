@@ -46,7 +46,7 @@ static int shell_set_env_var(word_t *cmd)
 	DIE(cmd == NULL, "Error: incorrect environment variable command");
 
 	const char *var = cmd->string;
-	const char *value = NULL;
+	char *value = NULL;
 	int err_code;
 
 	/* Check if value word is not NULL (it exists) */
@@ -63,6 +63,8 @@ static int shell_set_env_var(word_t *cmd)
 		// printf("value: %s\n", value);
 		err_code = setenv(var, value, 1);
 	}
+
+	free(value);
 
 	// printf("value: %s\n", getenv(var));
 
@@ -142,8 +144,9 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 		printf("argc: %d\n", argc);
 		if (argc == 2) {
 			int flags;
-
+			
 			if (s->out != NULL) {
+				char *file_name = get_word(s->out);
 				flags = O_WRONLY | O_CREAT;
 
 				if (s->io_flags == IO_OUT_APPEND) {
@@ -152,7 +155,7 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 					flags |= O_TRUNC;
 				}
 
-				int fd = open(s->out->string, flags, 0644);
+				int fd = open(file_name, flags, 0644);
 				DIE(fd < 0, "Error: failed open");
 
 				// int rc = dup2(fd, file_descriptor);
@@ -165,6 +168,7 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 			}
 
 			if (s->err != NULL) {
+				char *file_name = get_word(s->out);
 				flags = O_WRONLY | O_CREAT;
 
 				if (s->io_flags == IO_ERR_APPEND) {
@@ -173,7 +177,7 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 					flags |= O_TRUNC;
 				}
 
-				int fd = open(s->err->string, flags, 0644);
+				int fd = open(file_name, flags, 0644);
 				DIE(fd < 0, "Error: failed open");
 
 				// int rc = dup2(fd, file_descriptor);
@@ -239,7 +243,9 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 		}
 
 		if (s->out != NULL && s->err != NULL && strcmp(s->out->string, s->err->string) == 0) {
-			int fd = open(s->out->string, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+			char *file_name = get_word(s->out);
+
+			int fd = open(file_name, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 			DIE(fd < 0, "Error: failed open");
 
 			int rc = dup2(fd, STDOUT_FILENO);
@@ -250,8 +256,11 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 
 			rc = close(fd);
 			DIE(rc < 0, "Error: failed close");
+
+			free(file_name);
 		} else {
 			if (s->out != NULL) {
+				char *file_name = get_word(s->out);
 				flags = O_WRONLY | O_CREAT;
 
 				if (s->io_flags == IO_OUT_APPEND) {
@@ -260,10 +269,14 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 					flags |= O_TRUNC;
 				}
 
-				redirect(STDOUT_FILENO, s->out->string, flags, 0644);
+				redirect(STDOUT_FILENO, file_name, flags, 0644);
+
+				free(file_name);
 			}
 
 			if (s->err != NULL) {
+				char *file_name = get_word(s->err);
+
 				flags = O_WRONLY | O_CREAT;
 
 				if (s->io_flags == IO_ERR_APPEND) {
@@ -272,13 +285,19 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 					flags |= O_TRUNC;
 				}
 
-				redirect(STDERR_FILENO, s->err->string, flags, 0644);
+				redirect(STDERR_FILENO, file_name, flags, 0644);
+
+				free(file_name);
 			}
 		}
 
 		err_code = execvp(argv_child[0], argv_child);
 		// DIE(1, "Error: failed execvp");
 
+		if (err_code == -1) {
+        	fprintf(stderr, "Execution failed for '%s'\n", argv_child[0]);
+		}
+		
 		// !!!!!!!!!!!!!!!!!!!!!!
 		exit(err_code);
 		break;
