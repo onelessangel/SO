@@ -101,6 +101,8 @@ static void redirect_stdin(simple_command_t *s, int dup_usage)
 	int flags = O_RDONLY;
 
 	redirect(STDIN_FILENO, file_name, flags, 0444, dup_usage);
+
+	free(file_name);
 }
 
 static void redirect_stdout(simple_command_t *s, int dup_usage)
@@ -331,9 +333,12 @@ static bool run_on_pipe(command_t *cmd1, command_t *cmd2, int level,
 	switch (child_pid) {
 	case 0:
 		/* Child process */
+
+		/* Use first child process for executing first command */
 		rc = close(pipefd[READ]);
 		DIE(rc < 0, "Error: failed close");
 
+		/* Only needs the WRITE end of the pipe */
 		rc = dup2(pipefd[WRITE], STDOUT_FILENO);
 		DIE(rc < 0, "Error: failed dup2");
 
@@ -363,9 +368,12 @@ static bool run_on_pipe(command_t *cmd1, command_t *cmd2, int level,
 		switch (second_child_pid) {
 		case 0:
 			/* Child process */
+
+			/* Use second child process for executing second command */
 			rc = close(pipefd[WRITE]);
 			DIE(rc < 0, "Error: failed close");
 
+			/* Only needs the READ end of the pipe */
 			rc = dup2(pipefd[READ], STDIN_FILENO);
 			DIE(rc < 0, "Error: failed dup2");
 
@@ -418,7 +426,7 @@ static bool run_on_pipe(command_t *cmd1, command_t *cmd2, int level,
  */
 int parse_command(command_t *c, int level, command_t *father)
 {
-	/* sanity checks */
+	/* Sanity checks */
 	DIE(c == NULL, "Error: command is NULL");
 	DIE(level < 0, "Error: incorrect level value");
 
