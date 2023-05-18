@@ -47,17 +47,15 @@ static int shell_set_env_var(word_t *cmd)
 	char *value = get_word(cmd->next_part->next_part);
 	int err_code;
 
-	if (value == NULL) {
+	if (value == NULL)
 		err_code = setenv(var, "", 1);
-	} else {
+	else
 		err_code = setenv(var, value, 1);
-	}
 
 	free(value);
 
-	if (err_code == -1) {
+	if (err_code == -1)
 		return 1;
-	}
 
 	return 0;
 }
@@ -73,9 +71,8 @@ static int shell_exit(void)
 
 static void free_command_string(char ***argv, int argc)
 {
-	for (int i = 0; i < argc; i++) {
+	for (int i = 0; i < argc; i++)
 		free((*argv)[i]);
-	}
 
 	free(*argv);
 	*argv = NULL;
@@ -84,7 +81,9 @@ static void free_command_string(char ***argv, int argc)
 static void redirect(int file_descriptor, const char *file_name, int flags, mode_t mode, int dup_usage)
 {
 	int rc;
-	int fd = open(file_name, flags, mode);
+	int fd;
+
+	fd = open(file_name, flags, mode);
 	DIE(fd < 0, "Error: failed open");
 
 	if (dup_usage == MAKE_DUP) {
@@ -109,11 +108,10 @@ static void redirect_stdout(simple_command_t *s, int dup_usage)
 	char *file_name = get_word(s->out);
 	int flags = O_WRONLY | O_CREAT;
 
-	if (s->io_flags == IO_OUT_APPEND) {
+	if (s->io_flags == IO_OUT_APPEND)
 		flags |= O_APPEND;
-	} else {
+	else
 		flags |= O_TRUNC;
-	}
 
 	redirect(STDOUT_FILENO, file_name, flags, 0644, dup_usage);
 
@@ -125,13 +123,12 @@ static void redirect_stderr(simple_command_t *s, int dup_usage)
 	char *file_name = get_word(s->err);
 	int flags = flags = O_WRONLY | O_CREAT;
 
-	if (s->io_flags == IO_ERR_APPEND) {
+	if (s->io_flags == IO_ERR_APPEND)
 		flags |= O_APPEND;
-	} else {
+	else
 		flags |= O_TRUNC;
-	}
 
-	redirect(STDERR_FILENO, file_name, flags, 0644, dup_usage);\
+	redirect(STDERR_FILENO, file_name, flags, 0644, dup_usage);
 
 	free(file_name);
 }
@@ -140,11 +137,12 @@ static void redirect_stdout_and_stderr(simple_command_t *s)
 {
 	char *file_name = get_word(s->out);
 	int flags = O_WRONLY | O_CREAT | O_TRUNC;
+	int fd, rc;
 
-	int fd = open(file_name, flags, 0644);
+	fd = open(file_name, flags, 0644);
 	DIE(fd < 0, "Error: failed open");
 
-	int rc = dup2(fd, STDOUT_FILENO);
+	rc = dup2(fd, STDOUT_FILENO);
 	DIE(rc < 0, "Error: failed dup2");
 
 	rc = dup2(fd, STDERR_FILENO);
@@ -165,7 +163,7 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 	/* Sanity checks. */
 	DIE(s == NULL, "Error: simple command is NULL");
 	DIE(level < 0, "Error: incorrect level value");
-	
+
 	int argc;
 	char **argv = get_argv(s, &argc);
 	int err_code = 0;
@@ -177,16 +175,14 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 		free_command_string(&argv, argc);
 		return err_code;
 	}
-	
+
 	if (strcmp(argv[0], "cd") == 0) {
 		if (argc == 2) {
-			if (s->out != NULL) {
+			if (s->out != NULL)
 				redirect_stdout(s, AVOID_DUP);
-			}
 
-			if (s->err != NULL) {
+			if (s->err != NULL)
 				redirect_stderr(s, AVOID_DUP);
-			}
 
 			err_code = shell_cd(s->params);
 		}
@@ -221,33 +217,28 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 
 	child_pid = fork();
 
-	switch (child_pid)
-	{
+	switch (child_pid) {
 	case 0:
 		/* Child process */
 		argv_child = get_argv(s, &argc_child);
 
-		if (s->in != NULL) {
+		if (s->in != NULL)
 			redirect_stdin(s, MAKE_DUP);
-		}
 
 		if (s->out != NULL && s->err != NULL && strcmp(s->out->string, s->err->string) == 0) {
 			redirect_stdout_and_stderr(s);
 		} else {
-			if (s->out != NULL) {
+			if (s->out != NULL)
 				redirect_stdout(s, MAKE_DUP);
-			}
 
-			if (s->err != NULL) {
+			if (s->err != NULL)
 				redirect_stderr(s, MAKE_DUP);
-			}
 		}
 
 		err_code = execvp(argv_child[0], argv_child);
 
-		if (err_code == -1) {
-        	fprintf(stderr, "Execution failed for '%s'\n", argv_child[0]);
-		}
+		if (err_code == -1)
+			fprintf(stderr, "Execution failed for '%s'\n", argv_child[0]);
 
 		exit(err_code);
 		break;
@@ -256,15 +247,15 @@ static int parse_simple(simple_command_t *s, int level, command_t *father)
 		/* Error */
 		err_code = 1;
 		break;
-	
+
 	default:
 		/* Parent process */
 		wait_ret = waitpid(child_pid, &child_status, 0);
 		DIE(wait_ret < 0, "Error: failed waitpid");
 
-		if (WIFEXITED(child_status)) {
+		if (WIFEXITED(child_status))
 			err_code = WEXITSTATUS(child_status);
-		}
+
 		break;
 	}
 
@@ -287,20 +278,19 @@ static bool run_in_parallel(command_t *cmd1, command_t *cmd2, int level,
 
 	child_pid = fork();
 
-	switch (child_pid)
-	{
+	switch (child_pid) {
 	case 0:
 		/* Child process */
 		err_code = parse_command(cmd1, level, father);
 
 		exit(err_code);
 		break;
- 
+
 	case -1:
 		/* Error */
 		err_code = 1;
 		break;
-	
+
 	default:
 		/* Parent process */
 		err_code = parse_command(cmd2, level, father);
@@ -308,9 +298,8 @@ static bool run_in_parallel(command_t *cmd1, command_t *cmd2, int level,
 		wait_ret = waitpid(child_pid, &child_status, 0);
 		DIE(wait_ret < 0, "Error: failed waitpid");
 
-		if (WIFEXITED(child_status)) {
+		if (WIFEXITED(child_status))
 			err_code = WEXITSTATUS(child_status);
-		}
 
 		break;
 	}
@@ -330,7 +319,6 @@ static bool run_on_pipe(command_t *cmd1, command_t *cmd2, int level,
 	pid_t second_child_pid;
 	int pipe_ret;
 	int err_code = 0;
-	int child_status;
 	int second_child_status;
 	int wait_ret;
 	int rc;
@@ -340,8 +328,7 @@ static bool run_on_pipe(command_t *cmd1, command_t *cmd2, int level,
 
 	child_pid = fork();
 
-	switch (child_pid)
-	{
+	switch (child_pid) {
 	case 0:
 		/* Child process */
 		rc = close(pipefd[READ]);
@@ -357,7 +344,7 @@ static bool run_on_pipe(command_t *cmd1, command_t *cmd2, int level,
 
 		exit(err_code);
 		break;
- 
+
 	case -1:
 		/* Error */
 		rc = close(pipefd[READ]);
@@ -368,13 +355,12 @@ static bool run_on_pipe(command_t *cmd1, command_t *cmd2, int level,
 
 		err_code = 1;
 		break;
-	
+
 	default:
 		/* Parent process */
 		second_child_pid = fork();
 
-		switch (second_child_pid)
-		{
+		switch (second_child_pid) {
 		case 0:
 			/* Child process */
 			rc = close(pipefd[WRITE]);
@@ -390,7 +376,7 @@ static bool run_on_pipe(command_t *cmd1, command_t *cmd2, int level,
 
 			exit(err_code);
 			break;
-	
+
 		case -1:
 			/* Error */
 			rc = close(pipefd[READ]);
@@ -401,7 +387,7 @@ static bool run_on_pipe(command_t *cmd1, command_t *cmd2, int level,
 
 			err_code = 1;
 			break;
-		
+
 		default:
 			/* Parent process */
 
@@ -418,9 +404,8 @@ static bool run_on_pipe(command_t *cmd1, command_t *cmd2, int level,
 		wait_ret = waitpid(second_child_pid, &second_child_status, 0);
 		DIE(wait_ret < 0, "Error: failed waitpid");
 
-		if (WIFEXITED(second_child_status)) {
+		if (WIFEXITED(second_child_status))
 			err_code = WEXITSTATUS(second_child_status);
-		}
 
 		break;
 	}
@@ -443,7 +428,7 @@ int parse_command(command_t *c, int level, command_t *father)
 		/* Execute a simple command. */
 		err_code = parse_simple(c->scmd, level, father);
 
-		return(err_code);
+		return err_code;
 	}
 
 	switch (c->op) {
@@ -465,9 +450,8 @@ int parse_command(command_t *c, int level, command_t *father)
 		 */
 		err_code = parse_command(c->cmd1, level + 1, c);
 
-		if (err_code != 0) {
+		if (err_code != 0)
 			err_code = parse_command(c->cmd2, level + 1, c);
-		}
 
 		break;
 
@@ -477,10 +461,9 @@ int parse_command(command_t *c, int level, command_t *father)
 		 */
 		err_code = parse_command(c->cmd1, level + 1, c);
 
-		if (err_code == 0) {
+		if (err_code == 0)
 			err_code = parse_command(c->cmd2, level + 1, c);
-		}
-		
+
 		break;
 
 	case OP_PIPE:
